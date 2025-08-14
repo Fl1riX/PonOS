@@ -18,7 +18,7 @@ sh build.sh
 
 ---
 
-## 🛠️ Сборка
+## 🛠️ Сборка и запуск в ручную
 - Сборка загрузчика
 
 ```bash
@@ -36,8 +36,7 @@ nasm -f bin kernel.asm -o kernel.bin
 ```bash
 cat boot.bin kernel.bin > ponos.img
 ```
-
-## 🚀 Запуск
+- Запуск
 
 ```bash
 qemu-system-i386 -fda ponos.img
