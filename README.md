@@ -13,20 +13,20 @@ PonOS - это экспериментальная операционная си�
 ## 🛠️ Сборка
 
 ```bash
-# Сборка загрузчика
 nasm -f bin boot.asm -o boot.bin
+```
 
-# Сборка ядра
+```bash
 nasm -f bin kernel.asm -o kernel.bin
+```
 
-# Создание образа диска
+```bash
 cat boot.bin kernel.bin > ponos.img
 ```
 
 ## 🚀 Запуск
 
 ```bash
-# Запуск в QEMU
 qemu-system-i386 -fda ponos.img
 ```
 
