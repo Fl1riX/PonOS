@@ -34,4 +34,4 @@ print:
   ret          ; бесконечный цикл
 
 welcome db 'Welcome to the Pon operating system!', 13, 10, 'Type "help" to get a list of commands', 13, 10, 0  ; 13 - возврат каретки в начало строки, 10 - перевод на новую сроку 
-times 1024-($-$$) db 0 
+times 1020-($-$$) db 0 

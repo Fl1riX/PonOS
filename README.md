@@ -18,30 +18,6 @@ sh build.sh
 
 ---
 
-## 🛠️ Сборка и запуск в ручную
-- Сборка загрузчика
-
-```bash
-nasm -f bin boot.asm -o boot.bin
-```
-
-- Сборка ядра
-
-```bash
-nasm -f bin kernel.asm -o kernel.bin
-```
-
-- Монтирование диска
-
-```bash
-cat boot.bin kernel.bin > ponos.img
-```
-- Запуск
-
-```bash
-qemu-system-i386 -fda ponos.img
-```
-
 ## 📜 Лицензия
 
 MIT License. Подробнее см. в файле [LICENSE](LICENSE).

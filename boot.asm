@@ -1,5 +1,5 @@
 BITS 16
-ORG 0x7C00 
+ORG 0x8000
 
 start:
   mov [boot_drive], dl ; сохраняем в регистр dl номер диска с которого произошла загрузка
@@ -12,19 +12,11 @@ start:
 
   cli ; отключаем аппаратные прерывания
 
-  ; Обнуляем регистры DS и ES (чтобы сегменты данных и доп. сегменты указывали на 0x0000)
+  ; Обнуляем регистры AX, DS и ES (чтобы сегменты данных и доп. сегменты указывали на 0x0000)
   xor ax, ax
   mov ds, ax
-  mov es, ax
+  mov es, ax                    
 
-  ; инициализируем стек 
-  mov ss, ax 
-  mov sp, 0x7000
-  mov bp, sp
-                        
-  mov si, stack_inited ; информируем об инициализации стека
-  call print_info
-  
   mov si, reading_disk
   call print_info      ; сообщение Reading disk...
 
@@ -33,25 +25,82 @@ start:
   mov si, boot_mes    
   call print_info
 
-  sti                 ;включаем аппаратные прерывания
+  sti                  ; включаем аппаратные прерывания
 
-  jmp 0x1000          ; Передать управление загруженному коду (ядру)
+  jmp 0x1000           ; Передать управление загруженному коду (ядру)
 
+; проверка наличия поддержки EDD и LBA 
+lba_check: 
+  mov ah, 0x41         ; проверка наличия EDD 
+  mov dl, [boot_drive] ; номер диска для проверки 
+  mov bx, 0x55AA       ; записываем сигнатуру
+
+  int 0x13 
+  jc .not_supported 
+
+  cmp bx, 0xAA55
+  je .supported
+  jne .not_supported
+
+.supported:
+  mov si, lba_yes
+  call print_info
+  inc byte [lba_enable]
+  ret
+
+.not_supported:
+  mov si, lba_no
+  call print_info
+  ret
+
+; чтение диска 
 read_disk:
+  call lba_check
+  
+  cmp byte [lba_enable], 1
+  je .lba
+  jne .chs 
+
+  cmp al, 2                  ; проверяем количество реально загруженных секторов 
+  je .info                   ; сообщаем, что диск прочитан
+
+  mov si, disk_err_mes
+  jne print_error            ; иначе выводим ошибку
+
+; если LBA не поддерживается то используем CHS 
+.chs:
   mov ah, 0x02               ; Функция BIOS: чтение секторов с диска
   mov al, 2                  ; Количество секторов для чтения (1 сектор = 512 байт)
   mov ch, 0                  ; Номер цилиндра = 0
   mov dh, 0                  ; Номер головки = 0
-  mov cl, 2                  ; Номер сектора = 2 (сектора начинаются с 1, сектор 1 — это сам загрузчик)
+  mov cl, 4                  ; Номер сектора = 2 (сектора начинаются с 1, сектор 1 — это сам загрузчик)
   mov dl, [boot_drive]       ; Диск 0x00 = первый флоппи-диск (или A:)
   mov bx, 0x1000             ; Смещение в сегменте ES, куда загрузить сектор (ES=0, значит физ. адрес = 0x0000:0x1000)
  
   int 0x13                   ; Вызов BIOS для чтения сектора
-  jc disk_error              ; Если установлен флаг CF (ошибка ввода-вывода), перейти на обработку ошибки
-  
-  jnc .info                  ; сообщаем, что диск прочитан
+  jc disk_error              ; Если установлен флаг CF (ошибка ввода-вывода), перейти на обработку ошибки          
+  jnc .info 
 
   ret 
+
+.lba:
+  mov ah, 0x42
+
+  mov si, .dap
+  mov dl, [boot_drive]
+  
+  int 0x13 
+  jc disk_error
+  
+  jnc .info 
+
+.dap:
+  db 0x10   ; размер струкутуры (16 байт)
+  db 0      ; резерв(всегда 0)
+  dw 2      ; количество секторов для чтения 
+  dw 0x1000 ; смещение в памяти 
+  dw 0      ; сегмент памяти
+  dq 3      ; номер считываемого сектора
 
 .info:
   mov si, disk_readed
@@ -169,6 +218,9 @@ stack_inited db 'Stack initialized!', 13, 10, 0
 reading_disk db 'Reading disk...', 13, 10, 0
 disk_readed db 'Disk readed!', 13, 10, 0
 boot_mes db 'Loading kernel...', 13, 10, 0
+lba_yes db 'LBA supported!', 13, 10, 0
+lba_no db 'LBA not supported!', 13, 10, 0
+
 
 ; errors
 disk_err_mes db 'Disk reading error!', 0
@@ -185,6 +237,7 @@ unknown_error          db 'Unknown disk error', 0
 retry_count db 0
 error_code db 0 
 boot_drive db 0 
+lba_enable db 0 
+checks db 0 
 
-times 510-($-$$) db 0 ; Заполнение оставшегося места до 510 байт нулями
-dw 0xAA55             ; Сигнатура загрузочного сектора (MBR/boot sector)
+times 1024-($-$$) db 0 
