@@ -74,7 +74,7 @@ read_disk:
   mov ch, 0                  ; Номер цилиндра = 0
   mov dh, 0                  ; Номер головки = 0
   mov cl, 4                  ; Номер сектора = 2 (сектора начинаются с 1, сектор 1 — это сам загрузчик)
-  mov dl, [boot_drive]       ; Диск 0x00 = первый флоппи-диск (или A:)
+  mov dl, [boot_drive]       ; Номер загрузочного диска  
   mov bx, 0x1000             ; Смещение в сегменте ES, куда загрузить сектор (ES=0, значит физ. адрес = 0x0000:0x1000)
  
   int 0x13                   ; Вызов BIOS для чтения сектора
@@ -213,7 +213,7 @@ disk_error_table:
   db 0x00 ; макер конца таблицы
   dw unknown_error
 
-; info 
+; сообщения
 stack_inited db 'Stack initialized!', 13, 10, 0
 reading_disk db 'Reading disk...', 13, 10, 0
 disk_readed db 'Disk readed!', 13, 10, 0
@@ -221,8 +221,7 @@ boot_mes db 'Loading kernel...', 13, 10, 0
 lba_yes db 'LBA supported!', 13, 10, 0
 lba_no db 'LBA not supported!', 13, 10, 0
 
-
-; errors
+; ошибки
 disk_err_mes db 'Disk reading error!', 0
 error_invalid_cmd      db 'Error 0x01: Invalid command', 0
 error_address_mark     db 'Error 0x02: Address mark not found', 0  
