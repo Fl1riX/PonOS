@@ -1,4 +1,5 @@
 boot.bin
 kernel.bin
 ponos.img
+calculator.asm 
 ./build/ 
