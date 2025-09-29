@@ -20,7 +20,7 @@ o888o        `Y8bod8P' o888o o888o  `Y8bood8P'  8""88888P'
 [![Language](https://img.shields.io/badge/language-Assembly-red?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 [![Version](https://img.shields.io/badge/version-0.0.5-green?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 
-[Возможности](#-возможности) • [Быстрый старт](#-быстрый-старт) • [Архитектура](#-архитектура) • [Разработка](#-разработка) • [Roadmap](#-roadmap)
+[Возможности](#-возможности) • [Быстрый старт](#-быстрый-старт) • [Архитектура](#-архитектура) • [Разработка](#-разработка)
 
 </div>
 
