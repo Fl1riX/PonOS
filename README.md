@@ -273,6 +273,7 @@ gdb
 
 ## 📚 Ресурсы для изучения
 
+- Э.Таненбаум и Т.Остин "Архитектура компьютера"
 - [OSDev Wiki](https://wiki.osdev.org/) - Энциклопедия разработки ОС
 - [NASM Documentation](https://www.nasm.us/xdoc/2.15.05/html/nasmdoc0.html)
 - [x86 Assembly Guide](https://www.cs.virginia.edu/~evans/cs216/guides/x86.html)
