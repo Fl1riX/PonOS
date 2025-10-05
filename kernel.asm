@@ -1,9 +1,10 @@
 BITS 16
 ORG 0X1000
 
-;jmp kernel_start 
+jmp kernel_start 
 
-;%include "calculator.asm"
+%include "io.asm"
+%include "calculator.asm"
 
 kernel_start:
   mov ah, 0x00 ; устанавливаем видео режим
@@ -22,89 +23,25 @@ kernel_start:
 reboot:
   int 0x19 ; перезапуск системы 
 
-read_keyboard:
-  mov ah, 0x00
-  int 0x16
+check_pointer:
+  cmp byte [pointer_printed], 0
+  je .print_pointer
 
-  cmp byte [pressed_keys], 254  ; если количество клавиш превышает размер буфера, то происходит перезагрузка
-  jae clear_buffer
+  cmp byte [pointer_printed], 1
+  je .printed 
+  jg .error
 
-  cmp al, 8 ; проверка на backspace
-  je .del_character
+.print_pointer:
+  mov si, cmd_pointer
+  call print
+  inc byte [pointer_printed]
+  ret 
 
-  cmp al, 13 ; проверка на enter
-  je .enter_pressed
+.error:
+  mov byte [pointer_printed], 1
+  ret 
 
-  push bx
-  movzx si, [pressed_keys]         
-  mov bx, key_buffer            ; указываем адрес буфера 
-   
-  add bx, si 
-  mov [bx], al                  ; записываем клавишу в буфер + смещение на 1 
-  inc byte [pressed_keys]       ; увеличиваем число нажатых кнопок
-  
-  pop bx
-
-  mov ah, 0x0E      ; функция вывода символа 
-  int 0x10          ; выводим один символ из al 
-
-  jmp read_keyboard ; бесконечный цикл
-
-.enter_pressed:
-  call check_command
-  jmp read_keyboard
-
-.del_character:
-  mov ah, 0x03 ; получаем текущую позицию курсора
-  mov bh, 0    ; устанавливаем страницу
-  int 0x10 
-
-  dec byte [pressed_keys]
-
-  push bx
-  movzx si, [pressed_keys]  ; указываем адрес буфера 
-  mov bx, key_buffer
-   
-  add bx, si 
-  mov byte [bx], 0        ; записываем клавишу в буфер + смещение на 1 
-
-  pop bx
-
-  cmp dl, 0    ; проверка на начало строки 
-  je read_keyboard
-  jne .continue
-
-.continue:
-  dec dl       ; уменьшаем позицию курсора на 1 символ 
-  mov ah, 0x02 ; устанавливаем курсор 
-  int 0x10 
-
-  mov ah, 0x0E ; устанавливаем вывод символа 
-  mov al, ' '  ; выводим пробел 
-  int 0x10 
-  
-  mov ah, 0x03 ; снова получаем позицию курсора потому что при выводе символа он смещается влево 
-  int 0x10 
-  dec dl
-
-  mov ah, 0x02 ; устанавливаем курсор 
-  int 0x10
-  jmp read_keyboard ; снова читаем клавиатуру 
-
-clear_buffer:
-  push ax
-  push cx
-  push di 
-
-  mov di, key_buffer
-  mov cx, 254
-  mov al, 0
-  rep stosb  ; rep повтояет инструкцию столько сколько указанно в cx, stosb копирует байт из al по адресу es:di
-
-  pop di
-  pop cx
-  pop ax
-
+.printed:
   ret 
 
 check_command:  
@@ -201,8 +138,8 @@ help_command:
   jmp read_keyboard 
 
 calc_command:
-  ;call calc
-  ;jmp read_keyboard
+  call calc
+  jmp read_keyboard
   jmp read_keyboard
 
 clear_command:
@@ -241,46 +178,35 @@ str_cmp:
   clc
   ret 
 
-
-print:
-  jmp .loop
-
-.loop:
-  lodsb        ; загружаем по 1 символу из si в al
-  cmp al, 0    ; проверяем на конец строки
-
-  jz .done     ; когда строка заканчивается осуществляем переход
-
-  mov ah, 0x0E ; устанавливаем вывод символа 
-  int 0x10     ; выводим символ     
-
-  jmp .loop    ; начинаем цикл заново пока не выведется все слово 
-
-.done:
-  ret
-
 ; переменные
 key_buffer times 254 db 0     ; буфер клавиатуры под 256 символов 
 pressed_keys db 0             ; счетчик нажатых клавиш
+pointer_printed db 0 
 
 ; команды
 help_cmd db 'help', 0 
 reboot_cmd db 'reboot', 0 
 calc_cmd db 'calc', 0 
 clear_cmd db 'clear', 0 
-help_text db 13, 10,'type:', 13, 10, 'reboot - to reboot the device', 13, 10, 'calc - to open the calculator', 13, 10, 0
 
 ; сообщения 
-welcome db 'Welcome to the Pon operating system!', 13, 10, 'Type "help" to get command list', 13, 10, 0  ; 13 - возврат каретки в начало строки, 10 - перевод на новую сроку 
+welcome db 'Welcome to the Pon operating system!', 13, 10, \
+           'Type "help" to get command list', 13, 10, 0  ; 13 - возврат каретки в начало строки, 10 - перевод на новую сроку 
+cmd_pointer db 'PON>', 0 
+help_text db 13, 10,'type:', 13, 10, 'reboot - to reboot the device', 13, 10, \
+                    'calc - to open the calculator', 13, 10, \
+                    'clear - to clear the screen', 13, 10, 0
+
 banner db 'ooooooooo.                           .oooooo.    .oooooo..o ', 13, 10, \
           '`888   `Y88.                        d8P`  `Y8b  d8P`    `Y8 ', 13, 10, \
           ' 888   .d88   .ooooo.  ooo. .oo.   888      888 Y88bo.      ', 13, 10, \
           ' 888ooo88P   d88  `88b `888P Y88b  888      888  `Y8888o.   ', 13, 10, \
           ' 888         888   888  888   888  888      888      `Y88b  ', 13, 10, \
           ' 888         888   888  888   888  `88b    d88  oo     .d8P ', 13, 10, \
-          'o888o        `Y8bod8P  o888o o888o  `Y8bood8P   8``88888P`  ', 13, 10, 13, 10, 0                                                      
+          'o888o        `Y8bod8P  o888o o888o  `Y8bood8P   8``88888P`  ', 13, 10, \
+          '                         v0.0.6                             ', 13, 10, 0                                                      
                                                             
 ; ошибки
 cmd_not_found db 13, 10, 'Command not found!', 13, 10, 0 
 
-times 1536-($-$$) db 0 
+times 2048-($-$$) db 0 
