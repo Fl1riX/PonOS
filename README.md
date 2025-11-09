@@ -18,7 +18,7 @@ o888o        `Y8bod8P' o888o o888o  `Y8bood8P'  8""88888P'
 [![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
 [![Architecture](https://img.shields.io/badge/architecture-x86-lightgrey?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 [![Language](https://img.shields.io/badge/language-Assembly-red?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
-[![Version](https://img.shields.io/badge/version-0.0.5-green?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
+[![Version](https://img.shields.io/badge/version-0.0.5.1-green?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 
 [Возможности](#-возможности) • [Быстрый старт](#-быстрый-старт) • [Архитектура](#-архитектура) • [Разработка](#-разработка)
 
