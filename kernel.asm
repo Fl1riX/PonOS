@@ -3,8 +3,8 @@ ORG 0X1000
 
 jmp kernel_start 
 
-%include "io.asm"
-%include "calculator.asm"
+%include "kernel/io.asm"
+%include "apps/calculator.asm"
 
 kernel_start:
   mov ah, 0x00 ; устанавливаем видео режим
@@ -18,6 +18,7 @@ kernel_start:
   mov si, welcome
   call print
 
+  mov cx, 254
   call read_keyboard 
 
 reboot:
@@ -26,6 +27,7 @@ reboot:
 check_pointer:
   cmp byte [pointer_printed], 0
   je .print_pointer
+  jl .error
 
   cmp byte [pointer_printed], 1
   je .printed 

@@ -25,9 +25,52 @@ start:
   mov si, boot_mes    
   call print_info
 
-  sti                  ; включаем аппаратные прерывания
+  mov si, entering_to_pm
+  call print_info
 
-  jmp 0x1000           ; Передать управление загруженному коду (ядру)
+  jmp mov_to_pm        ; переход в защищенный режим 
+
+gdt_start:
+  ; Null дескриптор - обязательная часть
+  dq 0x0   
+
+gdt_code:
+  dw 0xFFFF     ; Limit[0-15]
+  dw 0x0000     ; Base[0-15]
+  db 0x00       ; Base[16-23]
+  db 10011010b  ; флаги доступа
+  db 11001111b  ; флаги + Limit[16-19]
+  db 0x00       ; Base[24-31]
+
+gdt_data:
+  dw 0xFFFF     ; Limit[0-15]
+  dw 0x0000     ; Base[0-15]
+  db 0x00       ; Base[16-23]
+  db 10010010b  ; флаги доступа
+  db 11001111b  ; флаги + Limit[16-19]
+  db 0x00       ; Base[24-31]
+ 
+gdt_end:
+
+gdt_descriptor:
+  dw gdt_end - gdt_start - 1 ; размер GDT в байтах - 1 (-1 т.к это особенность процессора. Если Gdt=24б, то пишем 23)
+  dd gdt_start               ; адрес начала gdt
+
+CODE_SEG equ gdt_code - gdt_start  ; 0x08 Вычисляем смещение дескриптора
+DATA_SEG equ gdt_data - gdt_start  ; 0x10
+
+mov_to_pm:
+  in al, 0x92   ; чтение порта и запись значения в AL 
+  or al, 2      ; устанавливаем бит №1 в AL (A20 gate bit)
+  out 0x92, al  ; обратно записываем значение из al в  порт 0x92 
+
+  lgdt [gdt_descriptor]
+
+  mov eax, cr0         ; Установить бит PE(Protected Mode)
+  or eax, 1
+  mov cr0, eax
+  
+  jmp CODE_SEG:0x1000  ; Far jump
 
 ; проверка наличия поддержки EDD и LBA 
 lba_check: 
@@ -61,11 +104,7 @@ read_disk:
   je .lba
   jne .chs 
 
-  cmp al, 2                  ; проверяем количество реально загруженных секторов 
-  je .info                   ; сообщаем, что диск прочитан
-
-  mov si, disk_err_mes
-  jne print_error            ; иначе выводим ошибку
+; TODO: эти строки никогда не выполнятся
 
 ; если LBA не поддерживается то используем CHS 
 .chs:
@@ -79,6 +118,7 @@ read_disk:
  
   int 0x13                   ; Вызов BIOS для чтения сектора
   jc disk_error              ; Если установлен флаг CF (ошибка ввода-вывода), перейти на обработку ошибки          
+
   jnc .info 
 
   ret 
@@ -92,8 +132,6 @@ read_disk:
   int 0x13 
   jc disk_error 
   
-  jnc .info 
-
 .dap:
   db 0x10   ; размер струкутуры (16 байт)
   db 0      ; резерв(всегда 0)
@@ -214,9 +252,9 @@ disk_error_table:
   dw unknown_error
 
 ; сообщения
-stack_inited db 'Stack initialized!', 13, 10, 0
+entering_to_pm db 'switching to protected 32-bit mode', 13, 10, 0
 reading_disk db 'Reading disk...', 13, 10, 0
-disk_readed db 'Disk readed!', 13, 10, 0
+disk_readed db 'Disk read successfully!', 13, 10, 0
 boot_mes db 'Loading kernel...', 13, 10, 0
 lba_yes db 'LBA supported!', 13, 10, 0
 lba_no db 'LBA not supported!', 13, 10, 0
