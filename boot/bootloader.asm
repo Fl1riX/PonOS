@@ -1,5 +1,6 @@
 BITS 16
 ORG 0x8000
+%include "kernel/constants.inc"
 
 start:
   mov [boot_drive], dl ; сохраняем в регистр dl номер диска с которого произошла загрузка
@@ -28,7 +29,20 @@ start:
   mov si, entering_to_pm
   call print_info
 
-  jmp mov_to_pm        ; переход в защищенный режим 
+  jmp mov_to_pm
+
+mov_to_pm:
+  in al, 0x92   ; чтение порта и запись значения в AL 
+  or al, 2      ; устанавливаем бит №1 в AL (A20 gate bit)
+  out 0x92, al  ; обратно записываем значение из al в  порт 0x92 
+
+  lgdt [gdt_descriptor]
+
+  mov eax, cr0         ; Установить бит PE(Protected Mode)
+  or eax, 1
+  mov cr0, eax
+  
+  jmp dword CODE_SEG:0x1000; Far jum
 
 gdt_start:
   ; Null дескриптор - обязательная часть
@@ -53,24 +67,9 @@ gdt_data:
 gdt_end:
 
 gdt_descriptor:
+; TODO: это записанно в константах, если нигде больше не используется, то убрать
   dw gdt_end - gdt_start - 1 ; размер GDT в байтах - 1 (-1 т.к это особенность процессора. Если Gdt=24б, то пишем 23)
   dd gdt_start               ; адрес начала gdt
-
-CODE_SEG equ gdt_code - gdt_start  ; 0x08 Вычисляем смещение дескриптора
-DATA_SEG equ gdt_data - gdt_start  ; 0x10
-
-mov_to_pm:
-  in al, 0x92   ; чтение порта и запись значения в AL 
-  or al, 2      ; устанавливаем бит №1 в AL (A20 gate bit)
-  out 0x92, al  ; обратно записываем значение из al в  порт 0x92 
-
-  lgdt [gdt_descriptor]
-
-  mov eax, cr0         ; Установить бит PE(Protected Mode)
-  or eax, 1
-  mov cr0, eax
-  
-  jmp CODE_SEG:0x1000  ; Far jump
 
 ; проверка наличия поддержки EDD и LBA 
 lba_check: 
@@ -102,15 +101,13 @@ read_disk:
   
   cmp byte [lba_enable], 1
   je .lba
-  jne .chs 
-
-; TODO: эти строки никогда не выполнятся
+  jmp .chs 
 
 ; если LBA не поддерживается то используем CHS 
 .chs:
   mov ah, 0x02               ; Функция BIOS: чтение секторов с диска
   mov al, 4                  ; Количество секторов для чтения (1 сектор = 512 байт)
-  mov ch, 0                  ; Номер цилиндра = 0
+  mov ch, 0                  ; Номер цилиндра = 0 
   mov dh, 0                  ; Номер головки = 0
   mov cl, 4                  ; Номер сектора (сектора начинаются с 1, сектор 1 — это сам загрузчик)
   mov dl, [boot_drive]       ; Номер загрузочного диска  
@@ -131,6 +128,8 @@ read_disk:
   
   int 0x13 
   jc disk_error 
+
+  jnc .info 
   
 .dap:
   db 0x10   ; размер струкутуры (16 байт)
@@ -138,7 +137,7 @@ read_disk:
   dw 4      ; количество секторов для чтения 
   dw 0x1000 ; смещение в памяти 
   dw 0      ; сегмент памяти
-  dq 3      ; номер считываемого сектора
+  dq 3     ; номер считываемого сектора
 
 .info:
   mov si, disk_readed
@@ -253,6 +252,7 @@ disk_error_table:
 
 ; сообщения
 entering_to_pm db 'switching to protected 32-bit mode', 13, 10, 0
+entry db 'Jumping to entry point', 13, 10, 0
 reading_disk db 'Reading disk...', 13, 10, 0
 disk_readed db 'Disk read successfully!', 13, 10, 0
 boot_mes db 'Loading kernel...', 13, 10, 0
