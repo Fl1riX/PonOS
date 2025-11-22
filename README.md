@@ -241,5 +241,3 @@ nasm -f bin boot/bootloader.asm -l build/boot/bootloader.lst
 ---
 
 **Made with ❤️ and Assembly**
-
-**Happy OS hacking!** 🔧⚙️🖥️
