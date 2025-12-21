@@ -8,7 +8,7 @@
 [![Architecture](https://img.shields.io/badge/architecture-x86-lightgrey?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 [![Language](https://img.shields.io/badge/language-Assembly-red?style=for-the-badge)]
 [![Language](https://img.shields.io/badge/language-C-blue?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
-[![Version](https://img.shields.io/badge/version-0.0.5.2-green?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
+[![Version](https://img.shields.io/badge/version-0.0.5.3-green?style=for-the-badge)](https://github.com/Fl1riX/PonOS)
 ---
 
 ## 📖 Описание проекта

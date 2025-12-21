@@ -1,6 +1,5 @@
 BITS 16
 ORG 0x8000
-%include "kernel/constants.inc"
 
 start:
   mov [boot_drive], dl ; сохраняем в регистр dl номер диска с которого произошла загрузка
@@ -67,9 +66,12 @@ gdt_data:
 gdt_end:
 
 gdt_descriptor:
-; TODO: это записанно в константах, если нигде больше не используется, то убрать
   dw gdt_end - gdt_start - 1 ; размер GDT в байтах - 1 (-1 т.к это особенность процессора. Если Gdt=24б, то пишем 23)
   dd gdt_start               ; адрес начала gdt
+
+; константы (при изменении GDT поменять их в entry)
+CODE_SEG equ gdt_code - gdt_start
+DATA_SEG equ gdt_data - gdt_start
 
 ; проверка наличия поддержки EDD и LBA 
 lba_check: 

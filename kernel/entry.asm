@@ -1,10 +1,13 @@
 [BITS 32]
-%include "kernel/constants.inc"
 EXTERN main
 
 global _start
-
 section .text
+
+; константы для gdt, высчитаны в ручную
+; Null descriptor (0) + Code descriptor (8) + Data descriptor (16)
+CODE_SEG equ 0x08
+DATA_SEG equ 0x10
 
 _start:
     cld
@@ -23,6 +26,7 @@ _start:
     
     ; при выходе из ядра зависаем
     cli
+
 .hang:
     hlt
     jmp .hang
