@@ -18,3 +18,5 @@ void print_char(char c);
 void clear_screen();
 void print_string(const char *str);
 void scroll_screen();
+void print_dec(int num);
+void print_hex(int num);
