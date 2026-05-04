@@ -3,7 +3,7 @@
 #define VGA_HEIGHT 25
 
 #define GET_INDEX(x, y) ((y) * VGA_WIDTH + (x)) //получаем индекс курсора
-#define VGA_COLOR(fg, bg) ((fg) << 4 | (bg))                                              
+#define VGA_COLOR(fg, bg) ((bg) << 4 | (fg))                                              
 
 #define VGA_BLACK   0
 #define VGA_BLUE    1
@@ -13,10 +13,11 @@
 #define VGA_MAGNETA 5
 #define VGA_BROWN   6
 #define VGA_WHITE   7
+#define COLOR_DEFAULT 0xFFFF
 
-void print_char(char c);
+void print_char(char c, unsigned short fg_color, unsigned short bg_color);
 void clear_screen();
-void print_string(const char *str);
+void print_string(const char *str, unsigned short fg_color, unsigned short bg_color);
 void scroll_screen();
-void print_dec(int num);
-void print_hex(int num);
+void print_dec(int num, unsigned short fg_color, unsigned short bg_color);
+void print_hex(int num, unsigned short fg_color, unsigned short bg_color);

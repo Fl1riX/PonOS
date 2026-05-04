@@ -4,10 +4,18 @@ static int cursor_x = 0;
 static int cursor_y = 0;
 static unsigned short *video = (unsigned short *)VGA_ADRESS;
 
-// TODO: дописать print_hex и print_dec
-
 // Выводит один символ на экран в текущей позиции курсора
-void print_char(char symbol) {    
+void print_char(
+    char symbol, 
+    unsigned short fg_color, 
+    unsigned short bg_color
+) 
+{
+    if (bg_color == COLOR_DEFAULT) 
+        bg_color = VGA_BLACK;
+    if (fg_color == COLOR_DEFAULT)
+        fg_color = VGA_WHITE;
+
     // Если курсор дошёл до конца строки (правая граница экрана)
     if (cursor_x >= VGA_WIDTH) {
         cursor_x = 0;      // Возвращаемся в начало строки
@@ -43,44 +51,61 @@ void print_char(char symbol) {
         // Если это обычный символ (буква, цифра, знак)
         else {
             // Записываем символ в видеопамять по текущим координатам
-            video[GET_INDEX(cursor_x, cursor_y)] = (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8) | symbol;
+            video[GET_INDEX(cursor_x, cursor_y)] = (VGA_COLOR(fg_color, bg_color) << 8) | symbol;
             cursor_x++;  // Сдвигаем курсор вправо для следующего символа
         }
     }
 }
 
 // вывод целочисленных значений
-void print_dec(int num) {
-    if (num > 0)
-        if (num != 0) {
-            unsigned short nums[100]; // массив для чисел 
-            short real_nums = 0;      // количество чисел, запианных в массив 
+void print_dec(
+    int num, 
+    unsigned short fg_color, 
+    unsigned short bg_color
+) 
+{
+    if (bg_color == COLOR_DEFAULT) 
+        bg_color = VGA_BLACK;
+    if (fg_color == COLOR_DEFAULT)
+        fg_color = VGA_WHITE;
 
-            // записываем числа в массив
-            for (int i=0; num > 0; i++) {
-                nums[i] = num % 10; // отделяем по 1 цифре от числа и записываем в массив 
-                num = num / 10;     // уменьшаем число 
-                real_nums++;        // увеличиваем уоличество записанных в массив цифр 
-            }
-            // выводим числа начиная с конца
-            for (int i=1; i < real_nums + 1; i++) {
-                print_char(48 + nums[real_nums - i]);
-            }
+    if (num > 0)
+    {
+        unsigned short nums[100]; // массив для чисел 
+        short real_nums = 0;      // количество чисел, запианных в массив 
+
+        // записываем числа в массив
+        for (int i=0; num > 0; i++) {
+            nums[i] = num % 10; // отделяем по 1 цифре от числа и записываем в массив 
+            num = num / 10;     // уменьшаем число 
+            real_nums++;        // увеличиваем уоличество записанных в массив цифр 
         }
-        else {
-            print_char('0');
+        // выводим числа начиная с конца
+        for (int i=1; i < real_nums + 1; i++) {
+            print_char(48 + nums[real_nums - i], fg_color, bg_color);
         }
-    else {
-            print_string("print_dec: Нельзя вывести число меньше 0");
-        }
+    }
+    else if (num == 0)
+        print_char('0', fg_color, bg_color);
+    else
+        print_string("print_dec: Нельзя вывести число меньше 0", fg_color, bg_color);
 }
 
 // выводит числа в hex формате 
 // т.к любое передаваемое число будет ввиде обычного числа, то обрабатываем его в таком виде
-void print_hex(int num) {
+void print_hex(
+    int num, 
+    unsigned short fg_color, 
+    unsigned short bg_color
+) 
+{
     // проверка на ввод отрицательного числа 
+    if (bg_color == COLOR_DEFAULT) 
+        bg_color = VGA_BLACK;
+    if (fg_color == COLOR_DEFAULT)
+        fg_color = VGA_WHITE;
+
     if (num > 0) {
-        if (num != 0) {
             unsigned short nums[100]; // массив для записи цифр 
             short real_nums = 0; // количество цифр записанных в массив 
 
@@ -91,33 +116,35 @@ void print_hex(int num) {
                 real_nums++;
             }
 
-            print_string("0x");
+            print_string("0x", fg_color, bg_color);
             
             // выводим число в 16ричном формате с проверкой на вывод букв 
             for (int i=1; i < real_nums + 1; i++) {
                 if (nums[real_nums - i] < 10) {
-                    print_char(48 + nums[real_nums - i]);
+                    print_char(48 + nums[real_nums - i], fg_color, bg_color);
                 }
-                else if (nums[real_nums - i] > 10) {
-                    print_char(55 + nums[real_nums - i]);
+                else if (nums[real_nums - i] >= 10) {
+                    print_char(55 + nums[real_nums - i], fg_color, bg_color);
                 }
             }
         }
-        else {
-            print_string("0x00000");
-        }
-    }
-    else {
-        print_string("print_hex: нельзя вывести чило меньше 0");
-    }
+    else if (num == 0)
+        print_string("0x00000", fg_color, bg_color);
+    else
+        print_string("print_hex: нельзя вывести чило меньше 0", fg_color, bg_color);
 }
 
 // Выводит целую строку на экран
-void print_string(const char *str) {
+void print_string(
+    const char *str, 
+    unsigned short fg_color, 
+    unsigned short bg_color
+) 
+{
     // Проходим по каждому символу строки, пока не дойдём до конца строки (символ '\0')
     for (int i = 0; str[i] != '\0'; i++) {
         // Выводим текущий символ
-        print_char(str[i]);
+        print_char(str[i], fg_color, bg_color);
     }
 }
 
@@ -125,7 +152,7 @@ void print_string(const char *str) {
 void clear_screen() {
     for (int y=0; y < VGA_HEIGHT; y++) {
         for (int x=0; x < VGA_WIDTH; x++) {
-            video[GET_INDEX(x, y)] = (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8) | ' ';
+            video[GET_INDEX(x, y)] = (VGA_COLOR(VGA_WHITE, VGA_BLACK) << 8) | ' ';
         } 
     }
     // После очистки устанавливаем курсор в левый верхний угол экрана
@@ -136,14 +163,14 @@ void clear_screen() {
 // проматывает экран на строку вниз при переполнении его символами 
 void scroll_screen() {
     // посимвольно переносим текст на строчку вверх 
-    for (int y = 0; y < VGA_HEIGHT; y++) {
+    for (int y = 1; y < VGA_HEIGHT; y++) {
         for (int x = 0; x < VGA_WIDTH; x++) {
             video[GET_INDEX(x, y - 1)] = video[GET_INDEX(x, y)];
         }
     }
     // очистка последней строки 
-    for (int i = 0; i < VGA_WIDTH; i++) {
-        video[GET_INDEX(i, 24)] = (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8) | ' ';
+    for (int x = 0; x < VGA_WIDTH; x++) {
+        video[GET_INDEX(x, VGA_HEIGHT - 1)] = (VGA_COLOR(VGA_WHITE, VGA_BLACK) << 8) | ' ';
     }
 
 }
