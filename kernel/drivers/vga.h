@@ -19,5 +19,5 @@ void print_char(char c, unsigned short fg_color, unsigned short bg_color);
 void clear_screen();
 void print_string(const char *str, unsigned short fg_color, unsigned short bg_color);
 void scroll_screen();
-void print_dec(int num, unsigned short fg_color, unsigned short bg_color);
-void print_hex(int num, unsigned short fg_color, unsigned short bg_color);
+void print_dec(unsigned int num, unsigned short fg_color, unsigned short bg_color);
+void print_hex(unsigned int num, unsigned short fg_color, unsigned short bg_color);
