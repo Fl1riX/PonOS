@@ -15,24 +15,20 @@ void print_char(
         bg_color = VGA_BLACK;
     if (fg_color == COLOR_DEFAULT)
         fg_color = VGA_WHITE;
-
-    // Если курсор дошёл до конца строки (правая граница экрана)
-    if (cursor_x >= VGA_WIDTH) {
-        cursor_x = 0;      // Возвращаемся в начало строки
-        cursor_y++;        // Переходим на следующую строку
-    }
-    else if (cursor_y >= VGA_HEIGHT) {
-        scroll_screen();
-        cursor_x = 0;
-    }
-    // Проверяем символы
     
+    // Проверяем символы
     // Если это символ новой строки
     if (symbol == '\n') {
         // Проверяем, не выходим ли за нижнюю границу экрана
-        cursor_y++;  // Переходим на следующую строку
-        cursor_x = 0; // Возвращаемся в начало строки
-            
+        if (cursor_y < VGA_HEIGHT - 1)
+        {
+            cursor_y++;  // Переходим на следующую строку
+            cursor_x = 0; // Возвращаемся в начало строки
+        }
+        else {
+            scroll_screen();
+            cursor_x = 0;
+        }
     }
     // Если это символ табуляции (отступ)
     else if (symbol == '\t') {
@@ -41,20 +37,39 @@ void print_char(
             cursor_x += 4;  // Сдвигаем курсор на 4 позиции вправо
         }
         else {
-            // Если не помещается - переходим на новую строку
-            cursor_x = 0;
-            cursor_y++;
-
+            if (cursor_y < VGA_HEIGHT - 1)
+            {   // Если не помещается - переходим на новую строку
+                cursor_y++;
+                cursor_x = 0;
+            }
+            else {
+                scroll_screen();
+                cursor_x = 0;
+            }
         }
     }
     // Если это обычный символ (буква, цифра, знак)
     else {
-        // Записываем символ в видеопамять по текущим координатам
-        video[GET_INDEX(cursor_x, cursor_y)] = (VGA_COLOR(fg_color, bg_color) << 8) | symbol;
-        cursor_x++;  // Сдвигаем курсор вправо для следующего символа
+        if (cursor_y < VGA_HEIGHT - 1)
+        {
+            if (cursor_x >= VGA_WIDTH)
+            {
+                cursor_x = 0;
+                cursor_y++;
+            }
+            // Записываем символ в видеопамять по текущим координатам
+            video[GET_INDEX(cursor_x, cursor_y)] = (VGA_COLOR(fg_color, bg_color) << 8) | symbol;
+            cursor_x++;  // Сдвигаем курсор вправо для следующего символа      
+        }
+        else { 
+            scroll_screen();
+            cursor_x = 0;
+
+            video[GET_INDEX(cursor_x, cursor_y)] = (VGA_COLOR(fg_color, bg_color) << 8) | symbol;
+            cursor_x++;
+        } 
     }
 }
-
 
 // вывод целочисленных значений
 void print_dec(
@@ -74,7 +89,7 @@ void print_dec(
         short real_nums = 0;      // количество чисел, запианных в массив 
 
         // записываем числа в массив
-        for (int i=0; num > 0 && num < 16; i++) {
+        for (int i=0; num > 0 && i < 16; i++) {
             nums[i] = num % 10; // отделяем по 1 цифре от числа и записываем в массив 
             num = num / 10;     // уменьшаем число 
             real_nums++;        // увеличиваем уоличество записанных в массив цифр 
@@ -106,11 +121,11 @@ void print_hex(
 
     if (num > 0) 
     {
-        unsigned short nums[100]; // массив для записи цифр 
+        unsigned short nums[16]; // массив для записи цифр 
         short real_nums = 0; // количество цифр записанных в массив 
 
         // разбиваем число на цифры 
-        for (int i=0; num > 0; i++) {
+        for (int i=0; num > 0 && i < 16; i++) {
             nums[i] = num % 16;
             num = num / 16;
             real_nums++;
@@ -119,7 +134,7 @@ void print_hex(
         print_string("0x", fg_color, bg_color);
             
         // выводим число в 16ричном формате с проверкой на вывод букв 
-        for (int i=1; i < real_nums + 1; i++) {
+        for (int i=1; i < real_nums + 1 && i < 16; i++) {
             if (nums[real_nums - i] < 10) {
                 print_char(48 + nums[real_nums - i], fg_color, bg_color);
             }
