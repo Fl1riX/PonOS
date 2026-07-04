@@ -9,7 +9,7 @@ lba_check:
 
   cmp bx, 0xAA55
   je .supported
-  jne .not_supported
+  jmp .not_supported
 
 .supported:
   mov si, lba_yes
@@ -43,9 +43,7 @@ read_disk:
   int 0x13                   ; Вызов BIOS для чтения сектора
   jc disk_error              ; Если установлен флаг CF (ошибка ввода-вывода), перейти на обработку ошибки          
 
-  jnc .info 
-
-  ret 
+  jmp.info 
 
 .lba:
   mov ah, 0x42 ; проверка наличия EDD 
