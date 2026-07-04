@@ -1,24 +1,17 @@
 ; вывод сообщения об ошибке 
 print_error: 
-  mov ah, 0x0E
+  call print_loop
 
-  jmp .loop 
-
-.loop:
-  lodsb
-  cmp al, 0
-  jz .done
-  
-  int 0x10 
-
-  jmp .loop 
-
-.done:
   cli 
   hlt 
 
 ; вывод ошибки 
 print_info:
+  call print_loop
+
+  ret
+
+print_loop:
   mov ah, 0x0E
 
   jmp .loop
@@ -33,4 +26,4 @@ print_info:
   jmp .loop
 
 .done:
- ret 
+  ret
